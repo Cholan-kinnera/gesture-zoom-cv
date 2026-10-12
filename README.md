@@ -112,7 +112,7 @@ $$d_{\text{ref}} = d(t_0), \quad Z_{\text{ref}} = Z(t_0 - 1)$$
 
 The raw target zoom factor $Z_{\text{target}}(t)$ is derived proportionally:
 
-$$Z_{\text{target}}(t) = \operatorname{clamp}\left( Z_{\text{ref}} \cdot \frac{d(t)}{d_{\text{ref}}}, \; Z_{\min}, \; Z_{\max} \right)$$
+$$Z_{\text{target}}(t) = \mathrm{clamp}\left( Z_{\text{ref}} \cdot \frac{d(t)}{d_{\text{ref}}}, \; Z_{\min}, \; Z_{\max} \right)$$
 
 where $Z_{\min} = 0.35$ (35% scale) and $Z_{\max} = 3.50$ (350% scale).
 
@@ -140,9 +140,9 @@ Because $\mathbf{M}(t) - \mathbf{M}_{\text{ref}}$ measures collective translatio
 
 Let the resized image dimensions be $(W_{\text{img}}, H_{\text{img}})$ and the video canvas dimensions be $(W_{\text{canvas}}, H_{\text{canvas}})$. The bounding coordinates on canvas space are:
 
-$$x_1 = \operatorname{round}\left( P_x - \frac{W_{\text{img}}}{2} \right), \quad x_2 = x_1 + W_{\text{img}}$$
+$$x_1 = \mathrm{round}\left( P_x - \frac{W_{\text{img}}}{2} \right), \quad x_2 = x_1 + W_{\text{img}}$$
 
-$$y_1 = \operatorname{round}\left( P_y - \frac{H_{\text{img}}}{2} \right), \quad y_2 = y_1 + H_{\text{img}}$$
+$$y_1 = \mathrm{round}\left( P_y - \frac{H_{\text{img}}}{2} \right), \quad y_2 = y_1 + H_{\text{img}}$$
 
 The canvas intersection slice $\mathcal{F}$ and image source slice $\mathcal{O}$ are determined by:
 
