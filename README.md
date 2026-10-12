@@ -1,111 +1,36 @@
+<div align="center">
 
-# Zoom Any Picture Using Hand Gestures (python Opencv Project)
+# Gesture-Zoom-cv
 
-This project showcases a Python application that allows you to zoom in and out of any picture using hand gestures. It utilizes the OpenCV library along with the cvzone module to detect and track hand gestures, enabling you to control the zoom level of an image effortlessly.
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&pause=1000&color=2563EB&center=true&vCenter=true&width=650&lines=Real-Time+Gesture-Driven+Computer+Vision+Engine;Sub-pixel+Decoupled+Zoom+%26+Pan+Controller;Powered+by+MediaPipe+Tasks+and+OpenCV;Engineered+by+Cholan+Kinnera" alt="Gesture-Zoom-cv Typing SVG" />
+</p>
 
-let's start...............
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?style=flat-square&logo=python)](https://www.python.org/)
+[![MediaPipe Tasks](https://img.shields.io/badge/MediaPipe_Tasks-v0.10.x-green.svg?style=flat-square&logo=google)](https://developers.google.com/mediapipe)
+[![OpenCV](https://img.shields.io/badge/OpenCV-v4.8%2B-red.svg?style=flat-square&logo=opencv)](https://opencv.org/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20POSIX-lightgrey.svg?style=flat-square&logo=linux)](https://endeavouros.com/)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg?style=flat-square)](LICENSE)
 
-To make this project you need to follow this step:-
+**Author:** [Cholan Kinnera](https://github.com/Cholan-kinnera)
 
-## MediaPipe Tasks & Model Source
+</div>
 
-This project uses the official Google MediaPipe Tasks API (`mediapipe >= 0.10.x`).
-The hand landmarker model is stored locally at `hand_landmarker.task`:
-- **Model Name:** `hand_landmarker.task` (float16)
-- **Official Google Source URL:** [https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task)
+---
 
-## Running the Application
+## Executive Overview
 
-Using fish shell or bash:
-```fish
-# Activate virtual environment and run
-./.venv/bin/python main.py
-```
+**Gesture-Zoom-cv** is a high-performance, real-time computer vision engine engineered to provide intuitive, touchless spatial manipulation of digital imagery using dual-hand kinematic gestures.
 
-    
-## Deployment
+Built on Google's modern **MediaPipe Tasks API** (`vision.HandLandmarker`) and **OpenCV**, this project circumvents the legacy `mp.solutions` deprecation barrier by leveraging the native graph-execution runtime and the official `float16` hand landmarker model.
 
-To deploy this project run
+### Key Capabilities
 
-```bash
-# Please Subscribe my youtube channel "@problemsolvewithridoy"
+- **Decoupled Kinematic Control**: Independent relative zoom scaling and spatial panning without positional drift.
+- **Orientation-Invariant Geometry**: Robust finger curl and extension classification based on palm-relative Euclidean metrics rather than naive vertical coordinates.
+- **Sub-Pixel Exponential Smoothing**: First-order exponential moving average (EMA) interpolation eliminates landmark micro-jitter.
+- **Persistent State Tracking**: Zero-jump transformation retention across tracking dropouts and gesture pauses.
+- **Fault-Tolerant Boundary Clipping**: Dynamic sub-matrix slicing guarantees that manipulated assets never cause shape-mismatch exceptions when crossing webcam frame boundaries.
+- **Presentation Dashboard**: Real-time Heads-Up Display (HUD) presenting tracking telemetry, gesture state, distance, scale, and FPS metrics.
 
-import cv2
-from cvzone.HandTrackingModule import HandDetector
-
-cap = cv2.VideoCapture(0)
-cap.set(3, 1280)
-cap.set(4, 720)
-
-detector = HandDetector(detectionCon=0.7)
-
-startDis = None
-scale = 0
-cx, cy = 200, 200
-
-while True:
-    success, img = cap.read()
-    hands, img = detector.findHands(img)
-    
-    img1 = cv2.imread("one.jpg") # write your picture file name
-
-    if len(hands) == 2:
-        # print("Zoom Gesture")
-        # print(detector.fingersUp(hands[0]), detector.fingersUp(hands[1]))
-        hand1 = hands[0]
-        hand2 = hands[1]
-
-        hand1_fingers = detector.fingersUp(hands[0])
-        hand2_fingers = detector.fingersUp(hands[1])
-
-        if hand1_fingers == [1,1,0,0,0] and hand2_fingers == [1,1,0,0,0]:
-            lmList1 = hand1["lmList"]
-            lmList2 = hand2["lmList"]
-
-            if startDis is None:
-                # length, info, img = detector.findDistance(lmList1[8], lmList2[8], img)
-                length, info, img = detector.findDistance(hand1["center"], hand2["center"], img)
-                # print(length)
-                startDis = length
-
-            # length, info, img = detector.findDistance(lmList1[8], lmList2[8], img)
-            length, info, img = detector.findDistance(hand1["center"], hand2["center"], img)
-            scale = int((length - startDis)//2)
-            cx, cy = info[4:]
-            # print(scale)
-
-    else:
-        startDis = None
-    
-    try:
-        h1, w1, _ = img1.shape
-        newH, newW = ((h1 + scale)//2)*2 , ((w1 + scale)//2)*2
-        img1 = cv2.resize(img1,(newH, newW))
-        img[cy - newH//2 : cy + newH//2, cx - newW//2 : cx + newW//2] = img1
-    
-    except:
-        pass
-    
-    
-
-    cv2.imshow("Problem Solve with Ridoy", img)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-```
-
-## You can follow me
-
-Facebook:- https://www.facebook.com/problemsolvewithridoy/
-
-Linkedin:- https://www.linkedin.com/in/ridoyhossain/
-
-YouTube:- https://www.youtube.com/@problemsolvewithridoy
-
-Gmail:- entridoy2@gmail.com
-
-If you have any confusion, please feel free to contact me. Thank you
-
-
-## License
-This script is released under the MIT License. Feel free to use, modify, and distribute it as you wish. If you find any bugs or have any suggestions for improvement, please submit an issue or a pull request on this repository.
-
+---
