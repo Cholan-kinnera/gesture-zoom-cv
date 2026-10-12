@@ -210,4 +210,107 @@ To eliminate edge fluttering and transient sensor noise, Gesture-Zoom-cv incorpo
 
 ---
 
+## Installation & Deployment
+
+### 1. Prerequisites
+
+- **Operating System**: Linux (Arch Linux, EndeavourOS, Ubuntu 22.04+, Fedora, or POSIX-compliant)
+- **Python**: Version 3.10+
+- **Camera**: V4L2-compatible USB or integrated webcam
+
+### 2. Environment Setup
+
+#### Using `uv` (Recommended for Ultra-Fast Setup):
+
+```bash
+# Clone the repository
+git clone https://github.com/Cholan-kinnera/gesture-zoom-cv.git
+cd gesture-zoom-cv
+
+# Create virtual environment with Python 3.10
+uv venv .venv --python 3.10
+
+# Activate virtual environment
+# For Fish Shell:
+source .venv/bin/activate.fish
+
+# For Bash / Zsh:
+source .venv/bin/activate
+
+# Install dependencies
+uv pip install -r requirements.txt
+```
+
+#### Using standard `pip`:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Model Acquisition
+
+The project requires the official Google MediaPipe Tasks `float16` Hand Landmarker model. If not already present in the workspace root, download it directly:
+
+```bash
+curl -L -o hand_landmarker.task \
+  https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+```
+
+### 4. Running the Engine
+
+#### Default Execution:
+
+```fish
+# Fish shell
+./.venv/bin/python main.py
+```
+
+```bash
+# Bash / Zsh
+./.venv/bin/python main.py
+```
+
+#### CLI Configuration Flags:
+
+```bash
+./.venv/bin/python main.py [OPTIONS]
+```
+
+| Flag | Short | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `--image` | `-i` | `one.jpg` | Filepath to target image asset to manipulate. |
+| `--model` | `-m` | `hand_landmarker.task` | Filepath to MediaPipe Task model bundle. |
+| `--camera` | `-c` | `0` | V4L2 hardware video device index (`/dev/video0`). |
+| `--width` | | `1280` | Webcam frame buffer capture width. |
+| `--height` | | `720` | Webcam frame buffer capture height. |
+
+---
+
+## Interaction & Controls Reference
+
+### 1. Dual-Hand Gesture Interaction
+
+| Action | Physical Gesture | Engine Response |
+| :--- | :--- | :--- |
+| **Engage Session** | Raise both hands, extend Thumb & Index on each hand (curl Middle, Ring, Pinky). | HUD displays `● ZOOM & PAN ACTIVE` in green. Anchor coordinates are established. |
+| **Zoom In** | Move both hands farther apart laterally. | Scales image up smoothly up to $350\%$ ($Z_{\max} = 3.50$). |
+| **Zoom Out** | Bring both hands closer together. | Scales image down smoothly to $35\%$ ($Z_{\min} = 0.35$). |
+| **Pan / Translate** | Move both hands collectively across the screen. | Image tracks hand midpoint translation synchronously across the canvas. |
+| **Disengage / Hold** | Relax fingers or lower hands. | Image freezes instantly at current zoom scale and spatial position. |
+
+### 2. Keyboard Control Hotkeys
+
+| Key | Function | Description |
+| :---: | :--- | :--- |
+| `r` | **Reset Transform** | Reverts zoom scale to 100% ($Z = 1.0$) and repositions image to canvas center. |
+| `+` / `=` | **Incremental Zoom In** | Increases zoom factor by $+15\%$ ($0.15$). |
+| `-` / `_` | **Incremental Zoom Out** | Decreases zoom factor by $-15\%$ ($0.15$). |
+| `f` | **Toggle Fullscreen** | Switches OpenCV window between borderless fullscreen and floating window mode. |
+| `q` | **Clean Teardown** | Safely releases webcam device handle and cleans up MediaPipe pipeline. |
+
+---
+
+
 
