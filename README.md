@@ -34,3 +34,56 @@ Built on Google's modern **MediaPipe Tasks API** (`vision.HandLandmarker`) and *
 - **Presentation Dashboard**: Real-time Heads-Up Display (HUD) presenting tracking telemetry, gesture state, distance, scale, and FPS metrics.
 
 ---
+
+## System Architecture & Pipeline
+
+Gesture-Zoom-cv operates as an optimized pipeline structured into five modular abstraction layers:
+
+```mermaid
+flowchart TD
+    subgraph INGESTION["1. Acquisition Layer"]
+        CAM["Webcam Feed (OpenCV VideoCapture)"] --> BGR["Raw BGR Frame (1280x720)"]
+    end
+
+    subgraph DETECTION["2. Inference Layer"]
+        BGR --> RGB["BGR to RGB Color Conversion"]
+        RGB --> MP["MediaPipe Tasks: HandLandmarker (float16)"]
+        MP --> LMS["21 Normalized 3D Landmarks Per Hand"]
+    end
+
+    subgraph GEOMETRY["3. Kinematic & Gesture Analysis Layer"]
+        LMS --> MCP["Compute Palm Center: (MCP5 + MCP17) / 2"]
+        LMS --> CLASSIFIER["Geometric Finger State Classifier"]
+        CLASSIFIER --> HYST["Temporal Hysteresis Filter (2-on / 3-off)"]
+        HYST --> STATE{"Gesture Active?"}
+    end
+
+    subgraph TRANSFORM["4. Transformation & Smoothing Engine"]
+        STATE -- "Yes" --> CALC_ZOOM["Relative Distance Ratio: d(t) / d_ref"]
+        STATE -- "Yes" --> CALC_PAN["Midpoint Translation: M(t) - M_ref"]
+        CALC_ZOOM --> EMA_Z["EMA Filter: Zoom (alpha = 0.30)"]
+        CALC_PAN --> EMA_P["EMA Filter: Pan (alpha = 0.32)"]
+        STATE -- "No" --> HOLD["Persist Last Transform State"]
+    end
+
+    subgraph COMPOSITION["5. Rendering & Composition Layer"]
+        EMA_Z --> RESIZE["Optimal Interpolation Resize (INTER_AREA / LINEAR)"]
+        HOLD --> RESIZE
+        RESIZE --> CLIP["Sub-Matrix Safe Intersection Overlay"]
+        EMA_P --> CLIP
+        CLIP --> HUD["HUD Telemetry & Skeleton Compositor"]
+        HUD --> DISP["High-Refresh Window (cv2.imshow)"]
+    end
+```
+
+### Pipeline Layer Responsibilities
+
+| Layer | Responsibility | Primary Technologies |
+| :--- | :--- | :--- |
+| **1. Acquisition** | High-definition camera stream capture (`1280x720` resolution). Non-blocking polling prevents frame buffer queuing. | OpenCV `VideoCapture`, V4L2 |
+| **2. Inference** | Hand detection and 21 3D normalized keypoint regression via hardware-accelerated CPU delegate. | MediaPipe Tasks `HandLandmarker` (`float16`), XNNPACK |
+| **3. Kinematics** | Pixel-space coordinate projection, palm center extraction, and angle/distance invariant finger state evaluation. | Vector Euclidean geometry |
+| **4. Transforms** | Continuous distance ratio computation, decoupled midpoint tracking, and low-pass filtering. | Exponential Moving Average (EMA) |
+| **5. Composition** | Sub-matrix intersection clipping, dual-mode interpolation resizing, telemetry rendering, and frame display. | NumPy slicing, OpenCV GUI |
+
+---
