@@ -156,3 +156,58 @@ This mathematical equivalence ensures $\dim(\mathcal{F}) \equiv \dim(\mathcal{O}
 
 ---
 
+## Gesture Kinematics & Geometric State Machine
+
+### 1. 21-Landmark Biomechanical Topology
+
+```
+                  8 [INDEX_TIP]    12 [MIDDLE_TIP]   16 [RING_TIP]   20 [PINKY_TIP]
+                     |                 |                |               |
+                  7 [DIP]           11 [DIP]          15 [DIP]        19 [DIP]
+                     |                 |                |               |
+                  6 [PIP]           10 [PIP]          14 [PIP]        18 [PIP]
+                     \                 |                |               /
+4 [THUMB_TIP]         5 [INDEX_MCP]     9 [MIDDLE_MCP]  13 [RING_MCP]  17 [PINKY_MCP]
+      |                      \                 |        /              /
+3 [THUMB_IP]                  \----------------+-------+--------------/
+      |                                        |
+2 [THUMB_MCP]                                  |  [PALM_CENTER = (5 + 17)/2]
+      |                                        |
+1 [THUMB_CMC] ---------------------------------/
+      \
+       0 [WRIST]
+```
+
+### 2. Geometric Classification Rules
+
+Unlike naive approaches relying on screen $y$-axes, Gesture-Zoom-cv evaluates relative inter-joint distances and vectors:
+
+| Digit | Evaluated Joints | Mathematical Condition | Target State | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Index** | Tip (8), PIP (6), Wrist (0), $\mathbf{C}$ | $\|\mathbf{P}_8 - \mathbf{C}\| > 1.10 \cdot \|\mathbf{P}_6 - \mathbf{C}\| \;\land\; \|\mathbf{P}_8 - \mathbf{P}_0\| > \|\mathbf{P}_6 - \mathbf{P}_0\|$ | **EXTENDED** (1) | Tip is pushed away from palm center and wrist beyond PIP joint. |
+| **Thumb** | Tip (4), IP (3), MCP (2), Pinky MCP (17), $\mathbf{C}$ | $\|\mathbf{P}_4 - \mathbf{P}_2\| > 1.05 \cdot \|\mathbf{P}_3 - \mathbf{P}_2\| \;\land\; (\|\mathbf{P}_4 - \mathbf{P}_{17}\| > 1.02 \cdot \|\mathbf{P}_3 - \mathbf{P}_{17}\| \;\lor\; \|\mathbf{P}_4 - \mathbf{C}\| > 0.65 \cdot L_{\text{palm}})$ | **EXTENDED** (1) | Thumb phalanx is straightened and abducted away from the palm. |
+| **Middle** | Tip (12), PIP (10), Wrist (0), $\mathbf{C}$ | $\|\mathbf{P}_{12} - \mathbf{C}\| < 1.15 \cdot \|\mathbf{P}_{10} - \mathbf{C}\| \;\lor\; \|\mathbf{P}_{12} - \mathbf{P}_0\| < 1.05 \cdot \|\mathbf{P}_{10} - \mathbf{P}_0\|$ | **FOLDED** (0) | Distal phalanx curls back toward the palm surface. |
+| **Ring** | Tip (16), PIP (14), Wrist (0), $\mathbf{C}$ | $\|\mathbf{P}_{16} - \mathbf{C}\| < 1.15 \cdot \|\mathbf{P}_{14} - \mathbf{C}\| \;\lor\; \|\mathbf{P}_{16} - \mathbf{P}_0\| < 1.05 \cdot \|\mathbf{P}_{14} - \mathbf{P}_0\|$ | **FOLDED** (0) | Distal phalanx curls back toward the palm surface. |
+| **Pinky** | Tip (20), PIP (18), Wrist (0), $\mathbf{C}$ | $\|\mathbf{P}_{20} - \mathbf{C}\| < 1.15 \cdot \|\mathbf{P}_{18} - \mathbf{C}\| \;\lor\; \|\mathbf{P}_{20} - \mathbf{P}_0\| < 1.05 \cdot \|\mathbf{P}_{18} - \mathbf{P}_0\|$ | **FOLDED** (0) | Distal phalanx curls back toward the palm surface. |
+
+A hand satisfies the activation condition if and only if:
+
+$$\text{Gesture}_{\text{valid}} = (\text{Thumb} = 1) \land (\text{Index} = 1) \land (\text{Middle} = 0) \land (\text{Ring} = 0) \land (\text{Pinky} = 0)$$
+
+### 3. Dual-Threshold Temporal Hysteresis
+
+To eliminate edge fluttering and transient sensor noise, Gesture-Zoom-cv incorporates a dual-threshold temporal hysteresis state machine:
+
+```
+[IDLE STATE]  ----( 2 Consecutive Valid Frames )---->  [ACTIVE STATE]
+      ^                                                      |
+      |                                                      |
+      \---------------( 3 Consecutive Missing Frames )-------/
+```
+
+- **Activation Threshold**: Requires $N_{\text{on}} \ge 2$ consecutive frames meeting the condition before enabling zoom and pan calculations.
+- **Deactivation Threshold**: Requires $N_{\text{off}} \ge 3$ consecutive frames without valid detection before releasing reference anchors, preventing momentary tracking drops from interrupting smooth continuous control.
+
+---
+
+
