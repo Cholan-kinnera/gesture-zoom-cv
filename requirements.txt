@@ -1,0 +1,6 @@
+# Gesture-Zoom-cv Dependency Specifications
+# Tested on Linux (EndeavourOS / Arch / Ubuntu) with Python 3.10+
+
+mediapipe>=0.10.14
+opencv-python>=4.8.0
+numpy>=1.24.0
