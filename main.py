@@ -5,6 +5,7 @@ Author: Cholan Kinnera
 Powered by MediaPipe Tasks API and OpenCV.
 Model: hand_landmarker.task
 """
+import argparse
 import math
 import os
 import cv2
@@ -189,9 +190,49 @@ def render_hud(frame, is_active, zoom_factor, pan_pos, num_hands, current_dist, 
     cv2.putText(frame, help_text, (x0 + 15, y0 + 86), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (160, 200, 160), 1)
 
 
-def main():
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Gesture-Zoom-cv: Real-Time Hand Gesture Controlled Image Manipulation Engine"
+    )
+    parser.add_argument(
+        "--image", "-i",
+        type=str,
+        default="one.jpg",
+        help="Path to the target image to be manipulated (default: one.jpg)"
+    )
+    parser.add_argument(
+        "--model", "-m",
+        type=str,
+        default="hand_landmarker.task",
+        help="Path to the MediaPipe HandLandmarker task model (default: hand_landmarker.task)"
+    )
+    parser.add_argument(
+        "--camera", "-c",
+        type=int,
+        default=0,
+        help="Camera device index (default: 0)"
+    )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=1280,
+        help="Webcam stream capture width (default: 1280)"
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=720,
+        help="Webcam stream capture height (default: 720)"
+    )
+    return parser.parse_args()
+
+
+def main(cli_args=None):
+    if cli_args is None:
+        cli_args = parse_args()
+
     # 1. Load image once
-    img_path = "one.jpg"
+    img_path = cli_args.image
     if not os.path.exists(img_path):
         raise FileNotFoundError(f"Target image '{img_path}' not found.")
     img_base = cv2.imread(img_path)
@@ -201,7 +242,7 @@ def main():
     aspect_ratio = w_orig / float(h_orig)
 
     # 2. Initialize MediaPipe Tasks HandLandmarker
-    model_path = "hand_landmarker.task"
+    model_path = cli_args.model
     if not os.path.exists(model_path):
         raise FileNotFoundError(
             f"Model '{model_path}' not found. Download from: "
@@ -220,9 +261,9 @@ def main():
     detector = vision.HandLandmarker.create_from_options(options)
 
     # 3. Setup Webcam
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap = cv2.VideoCapture(cli_args.camera)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, cli_args.width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cli_args.height)
 
     # Window configuration
     window_name = "Gesture-Zoom-cv [Cholan Kinnera]"
