@@ -1,6 +1,7 @@
 """
-Zoom Any Picture Using Hand Gestures
-Presentation-Ready Hand-Controlled Image Viewer with Smooth Zoom & Pan
+Gesture-Zoom-cv
+Real-Time Gesture-Controlled Image Manipulation Engine
+Author: Cholan Kinnera
 Powered by MediaPipe Tasks API and OpenCV.
 Model: hand_landmarker.task
 """
@@ -224,7 +225,7 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     # Window configuration
-    window_name = "Hand Gesture Image Viewer"
+    window_name = "Gesture-Zoom-cv [Cholan Kinnera]"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     is_fullscreen = False
 
@@ -257,14 +258,15 @@ def main():
     CONFIRM_FRAMES_OFF = 3  # Require 3 consecutive frames to deactivate (graceful drop)
 
     print("=======================================================")
-    print("Hand Gesture Image Viewer Started")
+    print("Gesture-Zoom-cv | Developed by Cholan Kinnera")
+    print("=======================================================")
     print("Controls:")
-    print("  Two-Hand Gesture (Thumb + Index): Zoom and Pan")
-    print("  [r]: Reset zoom & position to default")
-    print("  [+ / =]: Keyboard zoom in")
-    print("  [-]: Keyboard zoom out")
+    print("  Two-Hand Gesture (Thumb + Index): Zoom & Pan")
+    print("  [r]: Reset zoom and position to default")
+    print("  [+ / =]: Keyboard zoom in (+15%)")
+    print("  [-]: Keyboard zoom out (-15%)")
     print("  [f]: Toggle fullscreen")
-    print("  [q]: Quit application")
+    print("  [q]: Quit cleanly")
     print("=======================================================")
 
     try:
