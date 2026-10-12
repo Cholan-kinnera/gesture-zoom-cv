@@ -87,3 +87,72 @@ flowchart TD
 | **5. Composition** | Sub-matrix intersection clipping, dual-mode interpolation resizing, telemetry rendering, and frame display. | NumPy slicing, OpenCV GUI |
 
 ---
+
+## Mathematical Formulation
+
+Gesture-Zoom-cv relies on deterministic geometric modeling to guarantee mathematical consistency, rotational invariance, and numerical stability.
+
+### 1. Palm Center Reference Formulation
+
+To prevent center drift caused by finger articulation or wrist translation, the hand center $\mathbf{C} \in \mathbb{R}^2$ is computed as the midpoint between the Metacarpophalangeal (MCP) joints of the Index finger (landmark 5) and the Pinky finger (landmark 17):
+
+$$\mathbf{C} = \left( \frac{x_{\text{MCP5}} + x_{\text{MCP17}}}{2}, \; \frac{y_{\text{MCP5}} + y_{\text{MCP17}}}{2} \right)$$
+
+This point corresponds directly to the rigid palm biomechanics, remaining invariant to digit extension or curling.
+
+### 2. Relative Distance & Zoom Scaling
+
+When two hands are actively classified, the Euclidean inter-hand distance $d(t)$ at discrete frame $t$ is:
+
+$$d(t) = \|\mathbf{C}_2(t) - \mathbf{C}_1(t)\|_2 = \sqrt{(x_{C2} - x_{C1})^2 + (y_{C2} - y_{C1})^2}$$
+
+Upon gesture entry ($t = t_0$), reference anchors are established:
+
+$$d_{\text{ref}} = d(t_0), \quad Z_{\text{ref}} = Z(t_0 - 1)$$
+
+The raw target zoom factor $Z_{\text{target}}(t)$ is derived proportionally:
+
+$$Z_{\text{target}}(t) = \operatorname{clamp}\left( Z_{\text{ref}} \cdot \frac{d(t)}{d_{\text{ref}}}, \; Z_{\min}, \; Z_{\max} \right)$$
+
+where $Z_{\min} = 0.35$ (35% scale) and $Z_{\max} = 3.50$ (350% scale).
+
+To eliminate landmark jitter while maintaining responsiveness, first-order Exponential Moving Average (EMA) smoothing is applied:
+
+$$Z(t) = Z(t-1) + \alpha_{\text{zoom}} \cdot \left( Z_{\text{target}}(t) - Z(t-1) \right), \quad \alpha_{\text{zoom}} = 0.30$$
+
+### 3. Decoupled Spatial Panning
+
+Translation is driven by the spatial midpoint $\mathbf{M}(t)$ between the two hands:
+
+$$\mathbf{M}(t) = \frac{\mathbf{C}_1(t) + \mathbf{C}_2(t)}{2}$$
+
+The raw target pan position $\mathbf{P}_{\text{target}}(t) = (P_x, P_y)$ is updated relative to the initial midpoint anchor $\mathbf{M}_{\text{ref}}$:
+
+$$\mathbf{P}_{\text{target}}(t) = \mathbf{P}_{\text{ref}} + \left( \mathbf{M}(t) - \mathbf{M}_{\text{ref}} \right)$$
+
+Applying EMA smoothing:
+
+$$\mathbf{P}(t) = \mathbf{P}(t-1) + \alpha_{\text{pan}} \cdot \left( \mathbf{P}_{\text{target}}(t) - \mathbf{P}(t-1) \right), \quad \alpha_{\text{pan}} = 0.32$$
+
+Because $\mathbf{M}(t) - \mathbf{M}_{\text{ref}}$ measures collective translational drift independently of inter-hand distance variation $\|\mathbf{C}_2(t) - \mathbf{C}_1(t)\|$, panning and zooming operate as decoupled degrees of freedom.
+
+### 4. Fault-Tolerant Boundary Clipping
+
+Let the resized image dimensions be $(W_{\text{img}}, H_{\text{img}})$ and the video canvas dimensions be $(W_{\text{canvas}}, H_{\text{canvas}})$. The bounding coordinates on canvas space are:
+
+$$x_1 = \operatorname{round}\left( P_x - \frac{W_{\text{img}}}{2} \right), \quad x_2 = x_1 + W_{\text{img}}$$
+
+$$y_1 = \operatorname{round}\left( P_y - \frac{H_{\text{img}}}{2} \right), \quad y_2 = y_1 + H_{\text{img}}$$
+
+The canvas intersection slice $\mathcal{F}$ and image source slice $\mathcal{O}$ are determined by:
+
+$$\mathcal{F}_x = [\max(0, x_1), \; \min(W_{\text{canvas}}, x_2)], \quad \mathcal{F}_y = [\max(0, y_1), \; \min(H_{\text{canvas}}, y_2)]$$
+
+$$\mathcal{O}_x = [\max(0, -x_1), \; \max(0, -x_1) + (\mathcal{F}_{x2} - \mathcal{F}_{x1})]$$
+
+$$\mathcal{O}_y = [\max(0, -y_1), \; \max(0, -y_1) + (\mathcal{F}_{y2} - \mathcal{F}_{y1})]$$
+
+This mathematical equivalence ensures $\dim(\mathcal{F}) \equiv \dim(\mathcal{O})$ unconditionally, eliminating out-of-bounds matrix slicing exceptions when assets cross screen edges or exceed canvas dimensions.
+
+---
+
